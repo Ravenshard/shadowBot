@@ -11,7 +11,7 @@ listenChannels = ["general-unique", "channel-dva",
                     "farming-village", "farming-village-votes"]
 masterName = "master"
 listenGuilds = ["Dominion (Card Game)"]
-
+dt = datetime(2020,6,23,hour=14,minute=37)
 
 class MyClient(discord.Client):
 
@@ -22,8 +22,9 @@ class MyClient(discord.Client):
             if guild.name in listenGuilds:
                 for channel in guild.channels:
                     if channel.name in listenChannels:
-                        messages = await channel.history(limit=9999,after=datetime(2020,6,23,hour=14,minute=37)).flatten()
+                        messages = await channel.history(limit=9999,after=dt).flatten()
                         exportMessages(guild, channel, messages)
+        exit()
         return
 
     async def on_disconnect(self):
@@ -95,12 +96,10 @@ def exportMessages(guild, channel, msgList):
     logpath = createPath(".", "log")
     logpath = createPath(logpath, guild)
     logpath = createPath(logpath, channel)
-    # logpath = "./logsTEST/{}/{}".format(guild, channel)
     masterFile = createPath(logpath, masterName, fileType="tsv")
     authorSet = writeFile(masterFile, msgList)
     writeMultiFile(authorSet, msgList, logpath)
     print("done export")
-    exit()
     return
 
 
@@ -110,12 +109,13 @@ def exit():
 
 def args():
     if len(sys.argv) < 3: return
-    global listenChannels, listenGuilds
+    global listenChannels, listenGuilds, dt
     for flag, val in zip(sys.argv[1::2], sys.argv[2::2]):
         if flag == "-g": listenGuilds.append(val)
         elif flag == "-c": listenChannels.append(val)
         elif flag == "-go": listenGuilds = [val]
         elif flag == "-co": listenChannels = [val]
+        elif flag == "-dt": dt = datetime.strptime(datetime_str, '%Y/%m/%d-%H:%M:%S')
     return
 
 
