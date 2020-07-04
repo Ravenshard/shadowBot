@@ -11,7 +11,11 @@ listenChannels = ["general-unique", "channel-dva",
                     "farming-village", "farming-village-votes"]
 masterName = "master"
 listenGuilds = ["Dominion (Card Game)"]
-dt = datetime(2020,6,23,hour=14,minute=37)
+dtDict = {"border-village": datetime(2020,6,23,hour=14,minute=37),
+            "border-village-votes": datetime(2020,6,23,hour=14,minute=37),
+            "farming-village": datetime(2020, 7, 4, hour=15, minute=34),
+            "farming-village-votes" : datetime(2020, 7, 4, hour=15, minute=34)}
+msgLimit = 49999
 
 class MyClient(discord.Client):
 
@@ -22,7 +26,7 @@ class MyClient(discord.Client):
             if guild.name in listenGuilds:
                 for channel in guild.channels:
                     if channel.name in listenChannels:
-                        messages = await channel.history(limit=9999,after=dt).flatten()
+                        messages = await channel.history(limit=msgLimit,after=dtDict[channel.name]).flatten()
                         exportMessages(guild, channel, messages)
         exit()
         return
@@ -115,7 +119,8 @@ def args():
         elif flag == "-c": listenChannels.append(val)
         elif flag == "-go": listenGuilds = [val]
         elif flag == "-co": listenChannels = [val]
-        elif flag == "-dt": dt = datetime.strptime(datetime_str, '%Y/%m/%d-%H:%M:%S')
+        elif flag == "-dt": dt = datetime.strptime(val, '%Y/%m/%d-%H:%M:%S')
+        elif flag == "-l": msgLimit = val
     return
 
 
