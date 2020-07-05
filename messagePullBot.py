@@ -40,20 +40,17 @@ def createPath(logpath, name, fileType=None):
     logpath = "{}/{}".format(logpath, name)
     if not os.path.exists(logpath):
         print("making dir {}".format(logpath))
-        # print("fileType is {}".format(fileType))
         os.mkdir(logpath)
+    if fileType is None: return logpath
+
     dirlist = os.listdir(logpath)
-
-    if fileType is None:
-        return logpath
-
     if len(dirlist) > 0: num = format(int(max(dirlist)[-7:-4]) + 1, '03d')
     else: num = '000'
     return "{}/{}log{}.{}".format(logpath, name, num, fileType)
 
 
 def scrubContent(content):
-    content = re.sub('\n', ' |newline| ', content)
+    content = re.sub('\n', ' |nl| ', content)
     content = re.sub('\t', ' |tab| ', content)
     content = re.sub(' ww ', ' werewolf ', content)
     content = re.sub(' wws ', ' werewolves ', content)
@@ -62,6 +59,14 @@ def scrubContent(content):
     content = re.sub(" sac ", " sacrifice ", content)
     return content
 
+def writeRow(item, file):
+    mentions = ""
+    for person in item.mentions: mentions = "{},{}".format(mentions,person)
+    fileObj.write("{}\t{}\t{}\t{}\t{}\t{}\n".format(
+        item.author.name, item.id, scrubContent(item.content),
+        item.created_at, item.edited_at, mentions ))
+    return
+
 
 def writeFile(file, msgs):
     authorSet = set()
@@ -69,30 +74,18 @@ def writeFile(file, msgs):
     fileObj.write("Author\tId\tContent\tCreated_at\tEdited_at\tMentions\n")
     for item in msgs:
         authorSet.add(item.author.name)
-        mentions = ""
-        for person in item.mentions: mentions = "{},{}".format(mentions,person)
-        fileObj.write("{}\t{}\t{}\t{}\t{}\t{}\n".format(
-            item.author.name, item.id, scrubContent(item.content),
-            item.created_at, item.edited_at, mentions ))
+        writeRow(item, fileObj)
     fileObj.close()
     return authorSet
 
 
 def writeMultiFile(authors, msgs, logpath):
-
     fileObjDict = dict()
     for author in authors:
         fileObjDict[author] = open(createPath(logpath, author, fileType="tsv"), 'w')
         fileObjDict[author].write("Author\tId\tContent\tCreated_at\tEdited_at\tMentions\n")
-
-    for item in msgs:
-        mentions = ""
-        for person in item.mentions: mentions = "{},{}".format(mentions,person)
-        fileObjDict[item.author.name].write("{}\t{}\t{}\t{}\t{}\t{}\n".format(
-            item.author.name, item.id, scrubContent(item.content),
-            item.created_at, item.edited_at, mentions ))
-    for fileObj in fileObjDict.values():
-        fileObj.close()
+    for item in msgs: writeRow(item, fileObjDict[item.author.name])
+    for fileObj in fileObjDict.values(): fileObj.close()
     return
 
 
